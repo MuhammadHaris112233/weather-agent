@@ -1,0 +1,21 @@
+Table name assumed: weather_log. Paste each at Home > Modeling > New measure.
+
+Avg High C = AVERAGE(weather_log[temp_max_c])
+
+Avg Low C = AVERAGE(weather_log[temp_min_c])
+
+Total Rain mm = SUM(weather_log[rain_mm])
+
+Rainy Days = CALCULATE(COUNTROWS(weather_log), weather_log[rain_mm] >= 1)
+
+Avg Rain Chance = AVERAGE(weather_log[rain_chance_pct]) / 100
+
+Daily Temp Range = [Avg High C] - [Avg Low C]
+
+7 Day Avg High = 
+CALCULATE(
+    [Avg High C],
+    DATESINPERIOD(weather_log[date], MAX(weather_log[date]), -7, DAY)
+)
+
+Briefings Sent = CALCULATE(COUNTROWS(weather_log), weather_log[briefing] <> "")
