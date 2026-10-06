@@ -15,7 +15,7 @@ import requests
 
 from common import CITY, TIMEZONE, env, get_weather, read_log, upsert_rows
 
-MODEL = env("MODEL", "gemini-2.5-flash-lite")
+MODEL = env("MODEL", "gemini-3.1-flash-lite")
 SEND_HOUR = int(env("SEND_HOUR", "7"))
 DRY_RUN = env("DRY_RUN", "0") == "1"
 FORCE = env("FORCE_RUN", "0") == "1"
