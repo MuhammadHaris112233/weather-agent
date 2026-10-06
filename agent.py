@@ -1,21 +1,21 @@
-"""Daily Weather Intelligence Agent.
+"""Daily Weather Intelligence Agent (free version, uses Google Gemini).
 
-Claude is given three tools (forecast, recent weather, send email) and decides
-how to use them to write a short, useful morning briefing.
+The AI model is given three tools (forecast, recent weather, send email) and
+decides how to use them to write a short, useful morning briefing.
 """
-import json
 import os
 import smtplib
 import sys
+import time
 from datetime import datetime
 from email.message import EmailMessage
 from zoneinfo import ZoneInfo
 
-import anthropic
+import requests
 
 from common import CITY, TIMEZONE, env, get_weather, read_log, upsert_rows
 
-MODEL = env("MODEL", "claude-sonnet-5-5")
+MODEL = env("MODEL", "gemini-2.5-flash-lite")
 SEND_HOUR = int(env("SEND_HOUR", "7"))
 DRY_RUN = env("DRY_RUN", "0") == "1"
 FORCE = env("FORCE_RUN", "0") == "1"
@@ -28,23 +28,40 @@ what to wear or bring, the best time to be outside, and how today compares with 
 Mention the next two days in one sentence. Finish by calling send_email exactly once.
 Use Celsius and km/h."""
 
-TOOLS = [
+TOOLS = [{"functionDeclarations": [
     {"name": "get_forecast",
-     "description": "Daily forecast starting today: temperatures, rain, chance of rain, wind.",
-     "input_schema": {"type": "object", "properties": {
-         "days": {"type": "integer", "minimum": 1, "maximum": 7}}, "required": ["days"]}},
+     "description": "Daily forecast starting today: temperatures, rain, chance of rain, wind. days is 1 to 7.",
+     "parameters": {"type": "OBJECT",
+                    "properties": {"days": {"type": "INTEGER"}},
+                    "required": ["days"]}},
     {"name": "get_recent_weather",
-     "description": "Observed daily weather for the past N days, ending yesterday.",
-     "input_schema": {"type": "object", "properties": {
-         "days": {"type": "integer", "minimum": 1, "maximum": 14}}, "required": ["days"]}},
+     "description": "Observed daily weather for the past N days, ending yesterday. days is 1 to 14.",
+     "parameters": {"type": "OBJECT",
+                    "properties": {"days": {"type": "INTEGER"}},
+                    "required": ["days"]}},
     {"name": "send_email",
      "description": "Send the finished briefing to the user. Call once, at the end.",
-     "input_schema": {"type": "object", "properties": {
-         "subject": {"type": "string"}, "body": {"type": "string"}},
-         "required": ["subject", "body"]}},
-]
+     "parameters": {"type": "OBJECT",
+                    "properties": {"subject": {"type": "STRING"}, "body": {"type": "STRING"}},
+                    "required": ["subject", "body"]}},
+]}]
 
 sent = {"subject": None, "body": None}
+
+def call_model(contents):
+    """One request to the Gemini API, with a few retries for busy or rate-limited moments."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
+    body = {"systemInstruction": {"parts": [{"text": SYSTEM}]},
+            "contents": contents, "tools": TOOLS}
+    for attempt in range(4):
+        r = requests.post(url, json=body, timeout=90,
+                          headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+        if r.status_code in (429, 500, 503) and attempt < 3:
+            time.sleep(20 * (attempt + 1))
+            continue
+        r.raise_for_status()
+        return r.json()["candidates"][0]["content"]
+    raise RuntimeError("Gemini did not respond.")
 
 def deliver(subject, body):
     if DRY_RUN:
@@ -60,9 +77,9 @@ def deliver(subject, body):
 
 def run_tool(name, args):
     if name == "get_forecast":
-        return get_weather(past_days=0, forecast_days=args["days"])
+        return get_weather(past_days=0, forecast_days=max(1, min(7, int(args["days"]))))
     if name == "get_recent_weather":
-        return get_weather(past_days=args["days"], forecast_days=1)[:-1]
+        return get_weather(past_days=max(1, min(14, int(args["days"]))), forecast_days=1)[:-1]
     if name == "send_email":
         sent.update(subject=args["subject"], body=args["body"])
         deliver(args["subject"], args["body"])
@@ -85,20 +102,20 @@ def main():
     today = datetime.now(ZoneInfo(TIMEZONE)).strftime("%Y-%m-%d")
     if not should_run(today):
         return
-    client = anthropic.Anthropic()
-    messages = [{"role": "user", "content": f"Today is {today}. Write and send my briefing."}]
+    contents = [{"role": "user", "parts": [{"text": f"Today is {today}. Write and send my briefing."}]}]
+    reply = {"parts": []}
     for _ in range(8):
-        resp = client.messages.create(model=MODEL, max_tokens=1500, system=SYSTEM,
-                                      tools=TOOLS, messages=messages)
-        messages.append({"role": "assistant", "content": resp.content})
-        calls = [b for b in resp.content if b.type == "tool_use"]
+        reply = call_model(contents)
+        contents.append(reply)  # sent back unchanged so the model keeps its context
+        calls = [p["functionCall"] for p in reply.get("parts", []) if "functionCall" in p]
         if not calls:
             break
-        results = [{"type": "tool_result", "tool_use_id": c.id,
-                    "content": json.dumps(run_tool(c.name, c.input))} for c in calls]
-        messages.append({"role": "user", "content": results})
-    if not sent["body"]:  # safety net if the model replied without calling the tool
-        text = "".join(b.text for b in resp.content if b.type == "text").strip()
+        results = [{"functionResponse": {"name": c["name"],
+                                         "response": {"result": run_tool(c["name"], c.get("args", {}))}}}
+                   for c in calls]
+        contents.append({"role": "user", "parts": results})
+    if not sent["body"]:  # safety net if the model replied with text and skipped the tool
+        text = "".join(p.get("text", "") for p in reply.get("parts", [])).strip()
         if text:
             sent.update(subject=f"Weather in {CITY} today", body=text)
             deliver(sent["subject"], text)
