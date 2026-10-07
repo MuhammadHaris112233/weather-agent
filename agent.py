@@ -98,7 +98,7 @@ def run_tool(name, args):
 def should_run(today):
     if FORCE or DRY_RUN:
         return True
-    if datetime.now(ZoneInfo(TIMEZONE)).hour != SEND_HOUR:
+    if datetime.now(ZoneInfo(TIMEZONE)).hour < SEND_HOUR:
         print("Not the send hour in local time, skipping.")
         return False
     done = [r for r in read_log() if r["date"] == today and r["city"] == CITY and r["briefing"]]
