@@ -85,36 +85,15 @@ The briefing can highlight information such as:
 
 ---
 
-## 🤖 How the AI Agent Works
-
-```text
-             GitHub Actions
-             Daily Schedule
-                   │
-                   ▼
-               agent.py
-                   │
-                   ▼
-              Claude AI
-              (Tool Use)
-              /    |    \
-             /     |     \
-            ▼      ▼      ▼
-       Forecast  Recent   Email
-         Tool    Weather   Tool
-            │      │       │
-            └──┬───┘       ▼
-               │          Gmail
-               ▼
-          Open-Meteo API
-               │
-               ▼
-      data/weather_log.csv
-               │
-          ┌────┴────┐
-          ▼         ▼
-      Streamlit   Power BI
-```
+GitHub Actions
+      ↓
+   agent.py
+      ↓
+Google Gemini
+  (Tool Use)
+   /   |   \
+  ↓    ↓    ↓
+Forecast Recent Email
 
 GitHub Actions runs the workflow automatically.
 
