@@ -67,20 +67,22 @@ def deliver(subject, body):
     if DRY_RUN:
         print(f"--- DRY RUN, not sent ---\nSubject: {subject}\n\n{body}\n")
         return
+    to = env("EMAIL_TO", os.getenv("GMAIL_ADDRESS", ""))
+    if os.getenv("RESEND_API_KEY"):  # free service, sends over HTTPS (no Gmail login needed)
+        r = requests.post("https://api.resend.com/emails", timeout=30,
+                          headers={"Authorization": "Bearer " + os.environ["RESEND_API_KEY"]},
+                          json={"from": "Weather Agent <onboarding@resend.dev>",
+                                "to": [to], "subject": subject, "text": body})
+        r.raise_for_status()
+        return
     user = os.environ["GMAIL_ADDRESS"].strip()
     pw = os.environ["GMAIL_APP_PASSWORD"].replace(" ", "").strip()
     msg = EmailMessage()
-    msg["From"], msg["To"], msg["Subject"] = user, env("EMAIL_TO", user), subject
+    msg["From"], msg["To"], msg["Subject"] = user, to, subject
     msg.set_content(body)
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
-            s.login(user, pw)
-            s.send_message(msg)
-    except (smtplib.SMTPServerDisconnected, OSError):
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as s:
-            s.starttls()
-            s.login(user, pw)
-            s.send_message(msg)
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
+        s.login(user, pw)
+        s.send_message(msg)
 
 def run_tool(name, args):
     if name == "get_forecast":
