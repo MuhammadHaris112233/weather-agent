@@ -111,7 +111,7 @@ def main():
     today = datetime.now(ZoneInfo(TIMEZONE)).strftime("%Y-%m-%d")
     if not should_run(today):
         return
-    contents = [{"role": "user", "parts": [{"text": f"Today is {today}. Write and send my briefing."}]}]
+    contents = [{"role": "user", "parts": [{"text": f"Today is {datetime.now(ZoneInfo(TIMEZONE)):%A %d %B %Y}. Write and send my briefing."}]}]
     reply = {"parts": []}
     for _ in range(8):
         reply = call_model(contents)
