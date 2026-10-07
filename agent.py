@@ -67,13 +67,20 @@ def deliver(subject, body):
     if DRY_RUN:
         print(f"--- DRY RUN, not sent ---\nSubject: {subject}\n\n{body}\n")
         return
-    user, pw = os.environ["GMAIL_ADDRESS"], os.environ["GMAIL_APP_PASSWORD"]
+        user = os.environ["GMAIL_ADDRESS"].strip()
+    pw = os.environ["GMAIL_APP_PASSWORD"].replace(" ", "").strip()
     msg = EmailMessage()
     msg["From"], msg["To"], msg["Subject"] = user, env("EMAIL_TO", user), subject
     msg.set_content(body)
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-        s.login(user, pw)
-        s.send_message(msg)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
+            s.login(user, pw)
+            s.send_message(msg)
+    except (smtplib.SMTPServerDisconnected, OSError):
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as s:
+            s.starttls()
+            s.login(user, pw)
+            s.send_message(msg)
 
 def run_tool(name, args):
     if name == "get_forecast":
