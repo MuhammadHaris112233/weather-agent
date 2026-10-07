@@ -109,7 +109,7 @@ This project goes beyond a traditional fixed weather script.
 
 A standard script follows a predetermined sequence of instructions.
 
-In this project, Claude is provided with tools including:
+In this project, Google Gemini is provided with tools including:
 
 - Retrieve weather forecast
 - Retrieve recent weather
@@ -126,7 +126,7 @@ As a result, the content changes depending on the weather instead of simply inse
 | Technology | Purpose |
 |---|---|
 | Python | Core application and data processing |
-| Claude API | AI reasoning and briefing generation |
+| Google Gemini API | AI reasoning and briefing generation |
 | Open-Meteo API | Forecast and historical weather data |
 | Pandas | Data manipulation |
 | GitHub Actions | Daily workflow automation |
