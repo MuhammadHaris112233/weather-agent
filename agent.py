@@ -67,7 +67,7 @@ def deliver(subject, body):
     if DRY_RUN:
         print(f"--- DRY RUN, not sent ---\nSubject: {subject}\n\n{body}\n")
         return
-        user = os.environ["GMAIL_ADDRESS"].strip()
+    user = os.environ["GMAIL_ADDRESS"].strip()
     pw = os.environ["GMAIL_APP_PASSWORD"].replace(" ", "").strip()
     msg = EmailMessage()
     msg["From"], msg["To"], msg["Subject"] = user, env("EMAIL_TO", user), subject
