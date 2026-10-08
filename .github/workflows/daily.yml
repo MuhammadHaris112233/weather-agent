@@ -59,7 +59,4 @@ jobs:
             git add data/email_delivery.json
           fi
 
-          git diff --staged --quiet || (
-            git commit -m "Update weather log and delivery record"
-            git push
-          )
+          git diff --staged --quiet || (git commit -m "Update weather log and delivery record" && git push)
