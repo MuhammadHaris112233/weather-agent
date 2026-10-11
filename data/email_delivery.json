@@ -8,5 +8,10 @@
     "status": "sent",
     "subject": "Morning Weather Briefing: October 10, 2026",
     "timestamp": "2026-10-10T13:38:20.617846+01:00"
+  },
+  "Belfast:2026-10-11": {
+    "status": "sent",
+    "subject": "Morning Weather Briefing for Belfast: October 11, 2026",
+    "timestamp": "2026-10-11T13:56:56.963047+01:00"
   }
 }
