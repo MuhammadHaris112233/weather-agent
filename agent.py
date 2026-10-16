@@ -133,8 +133,11 @@ def mark_sent(today, subject):
     save_delivery_record(record)
 
 
+
 def call_model(contents):
-    """Call Gemini with retries for temporary API failures."""
+    """Call Gemini with exponential backoff for temporary API failures."""
+
+    import random
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/"
@@ -149,8 +152,16 @@ def call_model(contents):
         "tools": TOOLS
     }
 
-    for attempt in range(4):
+    max_attempts = 6
+    retryable_statuses = {429, 500, 502, 503, 504}
+
+    for attempt in range(1, max_attempts + 1):
         try:
+            print(
+                f"Gemini request: attempt "
+                f"{attempt}/{max_attempts}"
+            )
+
             response = requests.post(
                 url,
                 json=payload,
@@ -160,25 +171,86 @@ def call_model(contents):
                 }
             )
 
-            if response.status_code in (429, 500, 502, 503, 504):
-                if attempt < 3:
-                    time.sleep(10 * (attempt + 1))
-                    continue
+            if response.status_code in retryable_statuses:
+                print(
+                    f"Temporary Gemini API error: "
+                    f"HTTP {response.status_code}"
+                )
+
+                if attempt == max_attempts:
+                    response.raise_for_status()
+
+                retry_after = response.headers.get("Retry-After")
+
+                try:
+                    retry_after_seconds = (
+                        float(retry_after)
+                        if retry_after else 0
+                    )
+                except (ValueError, TypeError):
+                    retry_after_seconds = 0
+
+                delay = min(
+                    120,
+                    max(
+                        retry_after_seconds,
+                        min(
+                            60,
+                            5 * (2 ** (attempt - 1))
+                        ) + random.uniform(0, 3)
+                    )
+                )
+
+                print(
+                    f"Retrying in {delay:.1f} seconds..."
+                )
+
+                time.sleep(delay)
+                continue
 
             response.raise_for_status()
 
-            return response.json()["candidates"][0]["content"]
+            result = response.json()
 
-        except (requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError):
+            candidates = result.get("candidates", [])
 
-            if attempt == 3:
+            if not candidates or "content" not in candidates[0]:
+                raise RuntimeError(
+                    "Gemini returned no usable content: "
+                    f"{str(result)[:500]}"
+                )
+
+            print("Gemini request successful.")
+
+            return candidates[0]["content"]
+
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError
+        ) as error:
+
+            print(
+                f"Gemini connection error: {error}"
+            )
+
+            if attempt == max_attempts:
                 raise
 
-            time.sleep(10 * (attempt + 1))
+            delay = min(
+                60,
+                5 * (2 ** (attempt - 1))
+            ) + random.uniform(0, 3)
 
-    raise RuntimeError("Gemini did not respond.")
+            print(
+                f"Retrying in {delay:.1f} seconds..."
+            )
 
+            time.sleep(delay)
+
+    raise RuntimeError(
+        "Gemini API remained unavailable "
+        "after all retry attempts."
+    )
 
 def deliver(subject, body, today):
     """Send one email and record successful delivery submission."""
