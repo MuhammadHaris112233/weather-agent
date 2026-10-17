@@ -38,5 +38,10 @@
     "status": "sent",
     "subject": "Your Belfast Weather Briefing for October 16",
     "timestamp": "2026-10-16T23:38:22.561654+01:00"
+  },
+  "Belfast:2026-10-17": {
+    "status": "sent",
+    "subject": "Your Morning Weather Briefing for Saturday, October 17th",
+    "timestamp": "2026-10-17T11:50:57.124619+01:00"
   }
 }
