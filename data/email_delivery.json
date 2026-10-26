@@ -83,5 +83,10 @@
     "status": "sent",
     "subject": "Morning weather briefing for Sunday 25 October 2026",
     "timestamp": "2026-10-25T11:38:17.282012+00:00"
+  },
+  "Belfast:2026-10-26": {
+    "status": "sent",
+    "subject": "Morning Weather Briefing: Monday, 26 October",
+    "timestamp": "2026-10-26T13:11:31.334856+00:00"
   }
 }
