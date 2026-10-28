@@ -93,5 +93,10 @@
     "status": "sent",
     "subject": "Your Morning Weather Briefing for Tuesday, October 27",
     "timestamp": "2026-10-27T12:19:01.238959+00:00"
+  },
+  "Belfast:2026-10-28": {
+    "status": "sent",
+    "subject": "Belfast Morning Weather Briefing - October 28",
+    "timestamp": "2026-10-28T13:01:47.517392+00:00"
   }
 }
