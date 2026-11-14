@@ -178,5 +178,10 @@
     "status": "sent",
     "subject": "Belfast Morning Weather Briefing for November 13",
     "timestamp": "2026-11-13T14:39:52.415180+00:00"
+  },
+  "Belfast:2026-11-14": {
+    "status": "sent",
+    "subject": "Your Belfast Weather Briefing for November 14",
+    "timestamp": "2026-11-14T13:36:50.447072+00:00"
   }
 }
