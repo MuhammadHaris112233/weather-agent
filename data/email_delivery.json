@@ -198,5 +198,10 @@
     "status": "sent",
     "subject": "Weather briefing for November 17",
     "timestamp": "2026-11-17T16:06:44.872580+00:00"
+  },
+  "Belfast:2026-11-18": {
+    "status": "sent",
+    "subject": "Your Belfast Weather Briefing for 18 November",
+    "timestamp": "2026-11-18T15:45:25.391321+00:00"
   }
 }
