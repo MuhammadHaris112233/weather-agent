@@ -213,5 +213,10 @@
     "status": "sent",
     "subject": "Your Belfast Morning Weather Briefing",
     "timestamp": "2026-11-20T15:31:39.965828+00:00"
+  },
+  "Belfast:2026-11-21": {
+    "status": "sent",
+    "subject": "Your Belfast Weather Briefing for November 21",
+    "timestamp": "2026-11-21T14:43:22.493954+00:00"
   }
 }
