@@ -233,5 +233,10 @@
     "status": "sent",
     "subject": "Belfast Weather Briefing: Thursday 26 November",
     "timestamp": "2026-11-26T16:58:54.153307+00:00"
+  },
+  "Belfast:2026-11-27": {
+    "status": "sent",
+    "subject": "Your Belfast weather briefing for Friday, November 27",
+    "timestamp": "2026-11-27T16:44:27.560060+00:00"
   }
 }
